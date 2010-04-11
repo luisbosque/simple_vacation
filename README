@@ -1,0 +1,57 @@
+This file is for you to describe the simple_vacation application. Typically
+you would include information such as the information below:
+
+Description
+===========
+This application is intended to install in a mail server to auto-respond emails sent to 
+a person on vacations. Is based on gnarwl and the old vacation script.
+
+Requirements
+============
+* Postfix MTA
+* OpenLDAP with the ISPEnv2 schema
+* Python >= 2.4
+
+Installation and Setup
+======================
+This script is supposed to work in with any open source MTA (Postfix, qmail, exim, ...).
+Right now is only tested in conjunction with Postfix.
+
+First of all you have to copy the entire simple_vacation folder in any path on your server (ex. /usr/local/simple_vacation)
+
+* Postfix
+
+In postfix you have many options to use this script. I use the recipient_bcc_maps configuration parameter that sends a BCC to any email address listed in the table.
+In case you want to activate this feature for every target you can also use the always_bcc parameter.
+An example of use of recipient_bcc_maps could be the next one (main.cf):
+  
+    recipient_bcc_maps = hash:/etc/postfix/recipients_maps
+
+With this paraameter, postfix will compare every incoming email against the recipient_maps table.
+And example of this table, could be the next one:
+
+    @example.com      vacation@localhost
+
+So, with every email sent to a example.com address (supossely hosted in this server), postfix will create a bcc to the vacation@localhost address. So, here you have two options. One of them is create a vacaction system user and create a .forward file in his home path. The other, is add a postfix transport like this:
+
+    vacation@localhost     vacation:localhost
+
+This can be stored, for example, in a file like /etc/postfix/transport and need to add the next configuration in main.cf:
+
+    transport_maps = hash:/etc/postfix/transport
+
+In case we choose the transport way, we have to add one line in the master.cf postfix configuration file:
+
+    vacation   unix  -       n       n       -       -       pipe
+      user=vmail argv=/usr/local/simple_vacation/bin/vacation.py
+
+This tells postfix that every email sent to the vacation transport has to be redirected to the /usr/local/var/lib/vacation/bin/vacation.py program with a pipe.
+You can choose any user you want but postfix user that is not allowed. If you chose the vmail user then you have to adjust the simple_vacation permissions in this way:
+
+    chown vmail:root /usr/local/simple_vacation -R
+    chmod ug+x /usr/loval/simple/vacation/bin/vacation.py 
+
+
+Comments
+========
+This README is uncomplete. For any doubts you can mail me to luisico AT gmail DOT com
