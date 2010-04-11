@@ -9,18 +9,45 @@ import ldap
 import smtplib
 from   datetime       import datetime
 import ConfigParser
+import syslog
+
+
+syslog.openlog('vacation', syslog.LOG_PID)
+
 
 vacation_conf = "/usr/local/simple_vacation/config/vacation.cfg"
 
 config = ConfigParser.RawConfigParser()
-config.read(vacation_conf)
+try:
+  config.read(vacation_conf)
+except ConfigParser.MissingSectionHeaderError:
+  print "Section Global is missing in configuration file\n"
+  sys.exit(1)
 
-vacation_home = config.get("Global", "vacation_home")
-vacation_log_path = config.get("Global", "vacation_log_path")
-ldap_host = config.get("Global", "ldap_host")
-ldap_port = config.getint("Global", "ldap_port")
-ldap_base = config.get("Global", "ldap_base")
-default_vacation_message = config.get("Global", "default_vacation_message")
+
+def read_config(parameter):
+  try:
+    return config.get("Global", parameter)
+  except ConfigParser.NoSectionError:
+    print "Section Global is missing in configuration file\n"
+    sys.exit(1)
+  except ConfigParser.NoOptionError:
+    if parameter == "verbose":
+      return False
+    elif parameter == "vacation_log_path":
+      return vacation_path + "/log/"
+    elif parameter == "ldap_host":
+      return "localhost"
+    elif parameter == "ldap_port":
+      return 389
+    else:
+      print "Parameter %s is missing" % parameter
+      sys.exit(1)
+
+config_parameters = ["verbose", "vacation_home", "vacation_log_path", "ldap_host", "ldap_port", "ldap_base", "default_vacation_message"]
+for parameter in config_parameters:
+  parameter = read_config(parameter)
+
 
 def pair_exists(local_addr, remote_addr):
   if os.path.isfile('%s%s' % (vacation_log_path, local_addr)):
@@ -30,7 +57,7 @@ def pair_exists(local_addr, remote_addr):
         return True
     return False
   else:
-    return False
+   return False
 
 def add_pair(local_addr, remote_addr):
   log = open('%s%s' % (vacation_log_path, local_addr), 'a')
@@ -38,6 +65,10 @@ def add_pair(local_addr, remote_addr):
   log.write("\n")
   log.close()
 
+def log(level, message):
+  if level == syslog.LOG_ERR or verbose:
+    syslog.syslog(level|syslog.LOG_MAIL, message)
+  
 
 raw_email = sys.stdin.read()
 p = Parser.Parser()
@@ -76,3 +107,5 @@ if vacation_search[0][1]['vacationActive'][0] == 'TRUE':
   
   add_pair(to_addr[1], from_addr[1])
 
+
+syslog.closelog()
