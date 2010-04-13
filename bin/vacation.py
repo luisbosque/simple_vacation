@@ -40,7 +40,7 @@ def read_config(parameter):
     if parameter == "verbose":
       return False
     elif parameter == "vacation_log_path":
-      return vacation_path + "/log/"
+      return vacation_home + "/log/"
     elif parameter == "ldap_host":
       return "localhost"
     elif parameter == "ldap_port":
