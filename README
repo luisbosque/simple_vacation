@@ -3,8 +3,13 @@ you would include information such as the information below:
 
 Description
 ===========
-This application is intended to install in a mail server to auto-respond emails sent to 
-a person on vacations. Is based on gnarwl and the old vacation script.
+This is a server-side script. It checks in real time if a person is on vacation, If so, the script
+send an automatic respond to the remitent with a user custom message.
+
+It fetch all this information from a LDAP server. If a user wants to activate this feature, he has to 
+activate the vacationActive and vacationInfo attributes in the LDAP tree where his user information is stored.
+
+It is intended to be a gnarwl alternative. It's easier to use and to hack.
 
 Requirements
 ============
@@ -15,43 +20,52 @@ Requirements
 Installation and Setup
 ======================
 This script is supposed to work in with any open source MTA (Postfix, qmail, exim, ...).
-Right now is only tested in conjunction with Postfix.
+Right now is only tested in conjunction with Postfix.  I appreciate any kind of feedback about the use with other MTAs.
 
 First of all you have to copy the entire simple_vacation folder in any path on your server (ex. /usr/local/simple_vacation)
+You can clone directly the repo in the desired path:
+  
+    git clone git://github.com/lbosque/simple_vacation.git /usr/local/simple_vacation
+
 
 * Postfix
 
-In postfix you have many options to use this script. I use the recipient_bcc_maps configuration parameter that sends a BCC to any email address listed in the table.
-In case you want to activate this feature for every target you can also use the always_bcc parameter.
-An example of use of recipient_bcc_maps could be the next one (main.cf):
+There are a few options to use this script with Postfix. I use the recipient_bcc_maps configuration parameter that sends a BCC to any email address listed in the table.
+In case you want to activate this feature for every incoming email you can use the always_bcc parameter if you prefer.
+Here is an example of use of recipient_bcc_maps (main.cf):
   
     recipient_bcc_maps = hash:/etc/postfix/recipients_maps
 
-With this paraameter, postfix will compare every incoming email against the recipient_maps table.
-And example of this table, could be the next one:
+With this paraameter, postfix knows that it has to compare compare every incoming email against the recipient_maps table.
+This is an example of this table:
 
     @example.com      vacation@localhost
 
-So, with every email sent to a example.com address (supossely hosted in this server), postfix will create a bcc to the vacation@localhost address. So, here you have two options. One of them is create a vacaction system user and create a .forward file in his home path. The other, is add a postfix transport like this:
+With the above table, every email sent to an example.com address (supossely hosted in your server), postfix will create a bcc to the vacation@localhost address. So, here you have two options. One of them is create a vacation system user with a .forward file in his home path. The other, is to add a postfix transport table like the next one:
 
     vacation@localhost     vacation:localhost
 
-This can be stored, for example, in a file like /etc/postfix/transport and need to add the next configuration in main.cf:
+We are going to store this table, for example, in  /etc/postfix/transport so we need to write the next configuration line in oir main.cf:
 
     transport_maps = hash:/etc/postfix/transport
 
-In case we choose the transport way, we have to add one line in the master.cf postfix configuration file:
+Now, we have to define this transport behaviour. We can do this in the master.cf configuration file:
 
     vacation   unix  -       n       n       -       -       pipe
       user=vmail argv=/usr/local/simple_vacation/bin/vacation.py
 
-This tells postfix that every email sent to the vacation transport has to be redirected to the /usr/local/var/lib/vacation/bin/vacation.py program with a pipe.
-You can choose any user you want but postfix user that is not allowed. If you chose the vmail user then you have to adjust the simple_vacation permissions in this way:
+This tells postfix that every email sent to the vacation transport (vacation:localhost) has to be redirected to the /usr/local/simple_vacation/bin/vacation.py program stdin with a pipe and it has to be executed by the vmail user. You can choose any user you want but postfix user, that is not allowed. In this case, it's necessary to do change some permissions to simple_vacation directory:
 
     chown vmail:root /usr/local/simple_vacation -R
-    chmod ug+x /usr/loval/simple/vacation/bin/vacation.py 
+    chmod ug+x /usr/loval/simple_vacation/bin/vacation.py 
+
+
+Old vacation cleaning
+=====================
+It's necessary to clean the emails address registry every time a person come back from vacations. To do this, we can put in cron the chech_people_on_vacation.py script. This scripts, read all email registries and check if these emails are still on vacation. If it is, it remove this email registry, so there is a new fresh start next time this person go away on vacation.
+This script also read some configuration parameters from the same configuration file than the main vacation script.
 
 
 Comments
 ========
-This README is uncomplete. For any doubts you can mail me to luisico AT gmail DOT com
+This README and the script itself are work in progress. For any doubts you can mail me to luisico AT gmail DOT com
