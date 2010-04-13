@@ -15,8 +15,7 @@ import syslog
 syslog.openlog('vacation', syslog.LOG_PID)
 
 
-vacation_conf = "/home/luis/vacation.cfg"
-#vacation_conf = "/usr/local/simple_vacation/config/vacation.cfg"
+vacation_conf = "/usr/local/simple_vacation/config/vacation.cfg"
 
 def log(level, message):
   if (level == syslog.LOG_ERR) or (verbose == True):
