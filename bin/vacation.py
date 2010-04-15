@@ -96,6 +96,10 @@ except ldap.SERVER_DOWN:
   log(syslog.LOG_ERR, "Can't connect to ldap server on %s address and %s port" % (ldap_host, ldap_port.__str__()))
   sys.exit(1)
 
+if not vacation_search:
+  log(syslog.LOG_INFO, "Can't find the user %s" % to_addr[1])
+  sys.exit()
+
 if not vacation_search[0][1].has_key('vacationActive'):
   log(syslog.LOG_INFO, "The user %s has not the LDAP attribute vacationActive set" % to_addr[1])
   sys.exit()
