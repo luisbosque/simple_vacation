@@ -32,10 +32,15 @@ except ConfigParser.MissingSectionHeaderError:
 
 def read_config(parameter):
   try:
-    return config.get("Global", parameter)
+    if parameter == "verbose":
+      return config.getboolean("Global", parameter)
+    else:
+      return config.get("Global", parameter)
   except ConfigParser.NoSectionError:
     print "Section Global is missing in configuration file\n"
     sys.exit(1)
+  except ValueError:
+    log(syslog.LOG_ERR, "Parameter %s has an incorrect value" % parameter)
   except ConfigParser.NoOptionError:
     if parameter == "verbose":
       return False
