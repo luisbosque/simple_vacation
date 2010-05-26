@@ -3,10 +3,10 @@ you would include information such as the information below:
 
 Description
 ===========
-This is a server-side script. It checks in real time if a person is on vacation, If so, the script
-send an automatic reply to the remitent with a user custom message.
+This is a server-side script. It checks in real time if a person is on vacation, and if so, the script
+sends an automatic reply to the remitent with a user custom message.
 
-It fetch all this information from a LDAP server. If a user wants to activate this feature, he has to 
+It fetchs all this information from a LDAP server. If a user wants to activate this feature, he has to 
 activate the vacationActive and vacationInfo attributes in the LDAP tree where his user information is stored.
 
 It is intended to be a gnarwl alternative. It's easier to use and to hack.
